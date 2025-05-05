@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>汉字录音工具</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    textarea {
+      width: 60%;
+      height: 100px;
+      font-size: 18px;
+    }
+    button {
+      font-size: 16px;
+      margin: 5px;
+      padding: 8px 15px;
+    }
+    .char-section {
+      margin-top: 20px;
+    }
+    .recording {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h2>汉字录音界面</h2>
+<div style="display: flex;">
+  <textarea id="inputText" placeholder="请输入汉字，用顿号、逗号或空格分隔"></textarea>
+  <button onclick="generateRecordingUI()">生成录音按钮</button>
+</div>
+
+<div id="recordingArea" class="char-section"></div>
+
+<script>
+  let mediaRecorder;
+  let audioChunks = [];
+  let currentChar = "";
+
+  async function generateRecordingUI() {
+    const area = document.getElementById("recordingArea");
+    area.innerHTML = "";
+    const text = document.getElementById("inputText").value;
+    const chars = text.split(/[\u3001，,\s]+/);
+
+    chars.forEach(char => {
+      if (char.trim()) {
+        const container = document.createElement("div");
+        const label = document.createElement("span");
+        label.textContent = `【${char}】`;
+
+        const recordBtn = document.createElement("button");
+        recordBtn.textContent = "开始录音";
+        recordBtn.onclick = () => startRecording(char, recordBtn, stopBtn);
+
+        const stopBtn = document.createElement("button");
+        stopBtn.textContent = "停止并保存";
+        stopBtn.disabled = true;
+        stopBtn.onclick = () => stopRecording(char, stopBtn);
+
+        container.appendChild(label);
+        container.appendChild(recordBtn);
+        container.appendChild(stopBtn);
+        area.appendChild(container);
+      }
+    });
+  }
+
+  async function startRecording(char, recordBtn, stopBtn) {
+    if (!navigator.mediaDevices) {
+      alert("你的浏览器不支持录音。");
+      return;
+    }
+
+    currentChar = char;
+    recordBtn.disabled = true;
+    stopBtn.disabled = false;
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = event => {
+      if (event.data.size > 0) audioChunks.push(event.data);
+    };
+
+    mediaRecorder.start();
+  }
+
+  function stopRecording(char, stopBtn) {
+    stopBtn.disabled = true;
+    mediaRecorder.stop();
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${char}.webm`;
+      a.click();
+    };
+  }
+</script>
+
+</body>
+</html>
