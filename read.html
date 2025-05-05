@@ -1,1 +1,23 @@
+<script>
+  function generateButtons() {
+    const container = document.getElementById("charContainer");
+    container.innerHTML = "";
+    const text = document.getElementById("inputText").value;
+    const chars = text.split(/[\u3001，,\s]+/);
+
+    chars.forEach(char => {
+      if (char.trim()) {
+        const btn = document.createElement("button");
+        btn.className = "char-button";
+        btn.textContent = char;
+        btn.onclick = () => {
+          btn.classList.add("clicked");
+          const audio = new Audio(`/audio/${char}.mp3`);
+          audio.play().catch(e => alert(`播放失败：${char}.mp3 未找到`));
+        };
+        container.appendChild(btn);
+      }
+    });
+  }
+</script>
 
